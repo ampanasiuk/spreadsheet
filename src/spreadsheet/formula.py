@@ -4,6 +4,9 @@ from spreadsheet.coord import CoordLike
 
 
 class formula:
+    def __init__(self):
+        self.cached = None
+
     @staticmethod
     def make(obj):
         if isinstance(obj, formula):
@@ -25,40 +28,49 @@ class formula:
         return mul(formula.make(other), self)
 
     def value(self, s: cellvalues):
+        if self.cached is None:
+            self.cached = self._value(s)
+        return self.cached
+
+    def _value(self, s: cellvalues):
         raise NotImplementedError
 
 
 class const(formula):
     def __init__(self, val: int):
+        super().__init__()
         self.val = val
 
-    def value(self, s: cellvalues):
+    def _value(self, s: cellvalues):
         return self.val
 
 
 class ref(formula):
     def __init__(self, coord: CoordLike):
+        super().__init__()
         if not isinstance(coord, Coord):
             coord = Coord(coord)
         self.coord = coord
 
-    def value(self, s: cellvalues):
+    def _value(self, s: cellvalues):
         return s.get(self.coord)
 
 
 class sum(formula):
     def __init__(self, left: formula, right: formula):
+        super().__init__()
         self.left = left
         self.right = right
 
-    def value(self, s: cellvalues):
-        return self.left.value(s) + self.right.value(s)
+    def _value(self, s: cellvalues):
+        return self.left._value(s) + self.right._value(s)
 
 
 class mul(formula):
     def __init__(self, left: formula, right: formula):
+        super().__init__()
         self.left = left
         self.right = right
 
-    def value(self, s: cellvalues):
-        return self.left.value(s) * self.right.value(s)
+    def _value(self, s: cellvalues):
+        return self.left._value(s) * self.right._value(s)
