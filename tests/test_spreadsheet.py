@@ -149,3 +149,21 @@ def test_diamond_should_recalc(s):
     root = Coord("A1")
     l = Coord("A2")
     r = Coord("A3")
+    b = Coord("A4")
+    s[b] = ref(l) + ref(r)
+    s[l] = ref(root)
+    s[r] = ref(root) * 10
+    s[root] = 2
+    assert 22 == s[b]
+
+
+def test_cycles_should_raise(s):
+    with pytest.raises(SpreadsheetError, match=r"cycle"):
+        s["A1"] = ref("A1")
+
+
+def test_cycles_len_3_should_raise(s):
+    s["A1"] = ref("A3")
+    s["A2"] = ref("A1")
+    with pytest.raises(SpreadsheetError, match=r"cycle"):
+        s["A3"] = ref("A2")
