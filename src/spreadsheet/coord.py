@@ -15,6 +15,12 @@ class Coord:
         else:
             raise SpreadsheetError("invalid coords")
 
+    @staticmethod
+    def make(obj):
+        if isinstance(obj, Coord):
+            return obj
+        return Coord(obj)
+
     def _key(self):
         return self.col, self.row
 

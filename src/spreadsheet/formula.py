@@ -8,6 +8,8 @@ class formula:
     def make(obj):
         if isinstance(obj, formula):
             return obj
+        if not isinstance(obj, int):
+            raise TypeError
         return const(obj)
 
     def __add__(self, other):

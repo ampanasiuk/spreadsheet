@@ -14,12 +14,20 @@ class Spreadsheet(cellvalues):
     def __getitem__(self, item):
         if not isinstance(item, CoordLike):
             raise TypeError
-        if isinstance(item, str):
-            try:
-                item = Coord(item)
-            except SpreadsheetError as e:
-                raise KeyError(e)
+        try:
+            item = Coord.make(item)
+        except SpreadsheetError as e:
+            raise KeyError(e)
         return self.get(item)
+
+    def __setitem__(self, item, value):
+        if not isinstance(item, CoordLike):
+            raise TypeError
+        try:
+            item = Coord.make(item)
+        except SpreadsheetError as e:
+            raise KeyError(e)
+        self.data[item] = formula.make(value)
 
     def get(self, coord: Coord):
         if coord in self.data:
