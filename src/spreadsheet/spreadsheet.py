@@ -1,12 +1,10 @@
 from typing import Dict
 
-from spreadsheet.coord import Coord
 from spreadsheet.cellvalues import cellvalues
+from spreadsheet.coord import Coord
+from spreadsheet.coord import CoordLike
 from spreadsheet.formula import formula
-
-
-class SpreadsheetError(Exception):
-    pass
+from spreadsheet.spreadsheet_error import SpreadsheetError
 
 
 class Spreadsheet(cellvalues):
@@ -14,7 +12,7 @@ class Spreadsheet(cellvalues):
         self.data: Dict[Coord, formula] = {}
 
     def __getitem__(self, item):
-        if not isinstance(item, int):
+        if not isinstance(item, CoordLike):
             raise TypeError
         if isinstance(item, str):
             try:

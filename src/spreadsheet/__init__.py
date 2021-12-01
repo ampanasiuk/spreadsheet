@@ -1,4 +1,5 @@
-from spreadsheet.spreadsheet import Coord
-from spreadsheet.spreadsheet import CoordLike
+from spreadsheet.spreadsheet_error import SpreadsheetError  # isort:skip
+from spreadsheet.coord import Coord
+from spreadsheet.coord import CoordLike
 from spreadsheet.spreadsheet import Spreadsheet
-from spreadsheet.spreadsheet import SpreadsheetError
+

@@ -22,7 +22,7 @@ def test_cell_values_should_initially_be_zero(s, coord):
 
 @pytest.mark.parametrize("coord", ["A0", "A-1", "Ą1", "AAB", "a1", "ab", "156", "A1B", "A1!"])
 def test_should_only_accept_chess_coords(s, coord):
-    with pytest.raises(SpreadsheetError, matches=r'invalid coord'):
+    with pytest.raises(KeyError, match=r'invalid coord'):
         _ = s[coord]
 
 
