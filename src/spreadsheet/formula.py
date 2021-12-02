@@ -11,6 +11,11 @@ from spreadsheet.spreadsheet_error import SpreadsheetError
 
 
 class formula(Listener, Listenable):
+    """
+    A formula
+
+    Note: a formula should not be tied by inputs or assignment to more than one spreadsheet.
+    """
     def __init__(self):
         super().__init__()
         self.cached = None
@@ -35,6 +40,18 @@ class formula(Listener, Listenable):
 
     def __rmul__(self, other):
         return mul(formula.make(other), self)
+
+    def __lt__(self, other):
+        return lt(self, formula.make(other))
+
+    def __le__(self, other):
+        return le(self, formula.make(other))
+
+    def __gt__(self, other):
+        return gt(self, formula.make(other))
+
+    def __ge__(self, other):
+        return ge(self, formula.make(other))
 
     def value(self, s: CellStorage):
         if self.gray:
@@ -89,10 +106,10 @@ class ref(formula):
 
 
 class op(formula):
-    def __init__(self, operands: List[formula], op: Callable[[List[int]], int]):
+    def __init__(self, operands: List[formula], op: Callable[..., int]):
         super().__init__()
         self.op = op
-        self.operands = operands
+        self.operands = tuple(operands)
         for operand in self.operands:
             operand.add_listener(self)
 
@@ -100,20 +117,21 @@ class op(formula):
         return self.op(*[operand.value(s) for operand in self.operands])
 
 
-class sum(op):
-    def __init__(self, left: formula, right: formula):
-        super().__init__([left, right], operator.add)
+class binary_op(op):
+    def __init__(self, symbol: str, left: formula, right: formula, op: Callable[[int, int], int]):
+        super().__init__([left, right], op)
+        self.symbol = symbol
 
     def __repr__(self):
-        return "+".join(map(repr, self.operands))
+        return self.symbol.join(map(repr, self.operands))
 
 
-class mul(op):
-    def __init__(self, left: formula, right: formula):
-        super().__init__([left, right], operator.mul)
-
-    def __repr__(self):
-        return "*".join(map(repr, self.operands))
+sum = lambda l, r: binary_op("+", l, r, operator.add)
+mul = lambda l, r: binary_op("*", l, r, operator.mul)
+lt = lambda l, r: binary_op("<", l, r, lambda l, r: 0 + operator.lt(l, r))
+le = lambda l, r: binary_op("<=", l, r, lambda l, r: 0 + operator.le(l, r))
+gt = lambda l, r: binary_op(">", l, r, lambda l, r: 0 + operator.gt(l, r))
+ge = lambda l, r: binary_op(">=", l, r, lambda l, r: 0 + operator.ge(l, r))
 
 
 class cond(formula):

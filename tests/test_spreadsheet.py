@@ -1,3 +1,4 @@
+import operator
 import pytest
 
 from spreadsheet import Coord
@@ -200,3 +201,18 @@ def test_truish_condition_should_evaluate_to_then_val(s, condition):
 def test_false_condition_should_evaluate_to_else_val(s):
     s["A1"] = cond(0, 2, 3)
     assert 3 == s["A1"]
+
+
+@pytest.mark.parametrize("condition,op", [
+    (lambda: ref("A1") < ref("A2"), operator.lt),
+    (lambda: ref("A1") <= ref("A2"), operator.le),
+    (lambda: ref("A1") > ref("A2"), operator.gt),
+    (lambda: ref("A1") >= ref("A2"), operator.ge)
+])
+@pytest.mark.parametrize("a1", [-1, 0, 1])
+def test_comparison_operators_should_work(s, condition, op, a1):
+    condition = condition()
+    s["A1"] = a1 + 10
+    s["A2"] = 10
+    s["B1"] = condition
+    assert (0 + op(a1 + 10, 10)) == s["B1"]
