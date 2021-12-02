@@ -4,10 +4,11 @@ from spreadsheet import Coord
 from spreadsheet import Spreadsheet
 from spreadsheet import SpreadsheetError
 from spreadsheet.formula import ref
+from spreadsheet.formula import cond
 
 
 def test_spreadsheet_can_be_constructed():
-    s = Spreadsheet()
+    _ = Spreadsheet()
 
 
 @pytest.fixture
@@ -147,14 +148,32 @@ def test_values_are_cached(s):
 
 def test_diamond_should_recalc(s):
     root = Coord("A1")
-    l = Coord("A2")
-    r = Coord("A3")
-    b = Coord("A4")
+    l = Coord("B1")
+    r = Coord("B2")
+    b = Coord("C1")
     s[b] = ref(l) + ref(r)
     s[l] = ref(root)
     s[r] = ref(root) * 10
     s[root] = 2
     assert 22 == s[b]
+    s[root] = 3
+    assert 33 == s[b]
+
+
+def test_uneven_diamond_should_recalc(s):
+    root = Coord("A1")
+    l = Coord("B1")
+    r1 = Coord("B2")
+    r2 = Coord("C2")
+    b = Coord("D1")
+    s[b] = ref(l) + ref(r2)
+    s[l] = ref(root)
+    s[r2] = ref(r1)
+    s[r1] = ref(root) * 10
+    s[root] = 2
+    assert 22 == s[b]
+    s[root] = 3
+    assert 33 == s[b]
 
 
 def test_cycles_should_raise(s):
@@ -170,3 +189,14 @@ def test_cycles_len_3_should_raise(s, coord):
     s["A3"] = ref("A2")
     with pytest.raises(SpreadsheetError, match=r"cycle"):
         _ = s[coord]
+
+
+@pytest.mark.parametrize("condition", [1, 2, -1])
+def test_truish_condition_should_evaluate_to_then_val(s, condition):
+    s["A1"] = cond(condition, 2, 3)
+    assert 2 == s["A1"]
+
+
+def test_false_condition_should_evaluate_to_else_val(s):
+    s["A1"] = cond(0, 2, 3)
+    assert 3 == s["A1"]

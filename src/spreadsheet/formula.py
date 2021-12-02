@@ -1,3 +1,7 @@
+import operator
+from typing import Callable
+from typing import List
+
 from spreadsheet import Coord
 from spreadsheet.cellstorage import CellStorage
 from spreadsheet.coord import CoordLike
@@ -84,31 +88,43 @@ class ref(formula):
         return repr(self.coord)
 
 
-class sum(formula):
-    def __init__(self, left: formula, right: formula):
+class op(formula):
+    def __init__(self, operands: List[formula], op: Callable[[List[int]], int]):
         super().__init__()
-        self.left = left
-        self.left.add_listener(self)
-        self.right = right
-        self.right.add_listener(self)
+        self.op = op
+        self.operands = operands
+        for operand in self.operands:
+            operand.add_listener(self)
 
     def _value(self, s: CellStorage):
-        return self.left.value(s) + self.right.value(s)
+        return self.op(*[operand.value(s) for operand in self.operands])
+
+
+class sum(op):
+    def __init__(self, left: formula, right: formula):
+        super().__init__([left, right], operator.add)
 
     def __repr__(self):
-        return f"{self.left}+{self.right}"
+        return "+".join(map(repr, self.operands))
 
 
-class mul(formula):
+class mul(op):
     def __init__(self, left: formula, right: formula):
+        super().__init__([left, right], operator.mul)
+
+    def __repr__(self):
+        return "*".join(map(repr, self.operands))
+
+
+class cond(formula):
+    def __init__(self, condition, then_val, else_val):
         super().__init__()
-        self.left = left
-        self.left.add_listener(self)
-        self.right = right
-        self.right.add_listener(self)
+        self.condition = formula.make(condition)
+        self.condition.add_listener(self)
+        self.then_val = formula.make(then_val)
+        self.then_val.add_listener(self)
+        self.else_val = formula.make(else_val)
+        self.else_val.add_listener(self)
 
     def _value(self, s: CellStorage):
-        return self.left.value(s) * self.right.value(s)
-
-    def __repr__(self):
-        return f"{self.left}*{self.right}"
+        return self.then_val.value(s) if self.condition.value(s) else self.else_val.value(s)
