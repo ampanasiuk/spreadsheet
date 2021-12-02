@@ -3,12 +3,14 @@ from spreadsheet.cellstorage import CellStorage
 from spreadsheet.coord import CoordLike
 from spreadsheet.listener import Listenable
 from spreadsheet.listener import Listener
+from spreadsheet.spreadsheet_error import SpreadsheetError
 
 
 class formula(Listener, Listenable):
     def __init__(self):
         super().__init__()
         self.cached = None
+        self.gray = False
 
     @staticmethod
     def make(obj):
@@ -31,14 +33,22 @@ class formula(Listener, Listenable):
         return mul(formula.make(other), self)
 
     def value(self, s: CellStorage):
+        if self.gray:
+            raise SpreadsheetError("cycle")
         if self.cached is None:
+            self.gray = True
             self.cached = self._value(s)
+            self.gray = False
         return self.cached
 
     def clear(self, s: CellStorage):
+        if self.gray:
+            raise SpreadsheetError("cycle")
+        self.gray = True
         if self.cached is not None:
             self.cached = None
             self.notify(s)
+        self.gray = False
 
     def onevent(self, s: CellStorage):
         self.clear(s)

@@ -158,12 +158,15 @@ def test_diamond_should_recalc(s):
 
 
 def test_cycles_should_raise(s):
+    s["A1"] = ref("A1")
     with pytest.raises(SpreadsheetError, match=r"cycle"):
-        s["A1"] = ref("A1")
+        _ = s["A1"]
 
 
-def test_cycles_len_3_should_raise(s):
+@pytest.mark.parametrize("coord", ["A1", "A2", "A3"])
+def test_cycles_len_3_should_raise(s, coord):
     s["A1"] = ref("A3")
     s["A2"] = ref("A1")
+    s["A3"] = ref("A2")
     with pytest.raises(SpreadsheetError, match=r"cycle"):
-        s["A3"] = ref("A2")
+        _ = s[coord]
