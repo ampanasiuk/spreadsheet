@@ -1,10 +1,13 @@
-from spreadsheet.cellvalues import cellvalues
 from spreadsheet import Coord
+from spreadsheet.cellstorage import CellStorage
 from spreadsheet.coord import CoordLike
+from spreadsheet.listener import Listenable
+from spreadsheet.listener import Listener
 
 
-class formula:
+class formula(Listener, Listenable):
     def __init__(self):
+        super().__init__()
         self.cached = None
 
     @staticmethod
@@ -27,12 +30,20 @@ class formula:
     def __rmul__(self, other):
         return mul(formula.make(other), self)
 
-    def value(self, s: cellvalues):
+    def value(self, s: CellStorage):
         if self.cached is None:
             self.cached = self._value(s)
         return self.cached
 
-    def _value(self, s: cellvalues):
+    def clear(self, s: CellStorage):
+        if self.cached is not None:
+            self.cached = None
+            self.notify(s)
+
+    def onevent(self, s: CellStorage):
+        self.clear(s)
+
+    def _value(self, s: CellStorage):
         raise NotImplementedError
 
 
@@ -41,8 +52,11 @@ class const(formula):
         super().__init__()
         self.val = val
 
-    def _value(self, s: cellvalues):
+    def _value(self, s: CellStorage):
         return self.val
+
+    def __repr__(self):
+        return str(self.val)
 
 
 class ref(formula):
@@ -52,25 +66,39 @@ class ref(formula):
             coord = Coord(coord)
         self.coord = coord
 
-    def _value(self, s: cellvalues):
-        return s.get(self.coord)
+    def _value(self, s: CellStorage):
+        s.get(self.coord).add_listener(self)
+        return s.get(self.coord).value(s)
+
+    def __repr__(self):
+        return repr(self.coord)
 
 
 class sum(formula):
     def __init__(self, left: formula, right: formula):
         super().__init__()
         self.left = left
+        self.left.add_listener(self)
         self.right = right
+        self.right.add_listener(self)
 
-    def _value(self, s: cellvalues):
-        return self.left._value(s) + self.right._value(s)
+    def _value(self, s: CellStorage):
+        return self.left.value(s) + self.right.value(s)
+
+    def __repr__(self):
+        return f"{self.left}+{self.right}"
 
 
 class mul(formula):
     def __init__(self, left: formula, right: formula):
         super().__init__()
         self.left = left
+        self.left.add_listener(self)
         self.right = right
+        self.right.add_listener(self)
 
-    def _value(self, s: cellvalues):
-        return self.left._value(s) * self.right._value(s)
+    def _value(self, s: CellStorage):
+        return self.left.value(s) * self.right.value(s)
+
+    def __repr__(self):
+        return f"{self.left}*{self.right}"

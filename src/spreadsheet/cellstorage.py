@@ -1,6 +1,6 @@
 from spreadsheet.coord import Coord
 
 
-class cellvalues:
+class CellStorage:
     def get(self, coord: Coord):
         raise NotImplementedError

@@ -36,35 +36,35 @@ def test_should_be_possible_to_store_int(s, coord, value):
 
 def test_should_be_possible_to_ref_cell(s):
     s["A2"] = 3
-    s["B3"] = ref("A2")
-    assert 3 == s["B3"]
+    s["A1"] = ref("A2")
+    assert 3 == s["A1"]
 
 
 def test_ref_should_update(s):
-    s["B3"] = ref("A2")
-    assert 0 == s["B3"]
-    s["A2"] = 4
-    assert 4 == s["B3"]
-    s["A2"] = -7
-    assert -7 == s["B3"]
+    s["B1"] = ref("A1")
+    assert 0 == s["B1"]
+    s["A1"] = 4
+    assert 4 == s["B1"]
+    s["A1"] = -7
+    assert -7 == s["B1"]
 
 
 def test_ref_should_follow_another_ref(s):
-    s["B3"] = ref("A2")
-    s["A2"] = ref("C4")
-    assert 0 == s["B3"]
-    s["C4"] = 9
-    assert 9 == s["B3"]
-    s["C4"] = -8
-    assert -8 == s["B3"]
+    s["C1"] = ref("B1")
+    s["B1"] = ref("A1")
+    assert 0 == s["C1"]
+    s["A1"] = 9
+    assert 9 == s["C1"]
+    s["A1"] = -8
+    assert -8 == s["C1"]
 
 
 def test_formula_add_can_take_operands_ref_and_int(s):
-    s["D8"] = ref("A2") + 1
-    s["A2"] = 9
-    assert 10 == s["D8"]
-    s["A2"] = 11
-    assert 12 == s["D8"]
+    s["B1"] = ref("A1") + 1
+    s["A1"] = 9
+    assert 10 == s["B1"]
+    s["A1"] = 11
+    assert 12 == s["B1"]
 
 
 def test_formula_add_can_take_operands_int_and_ref(s):

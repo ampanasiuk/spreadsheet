@@ -34,5 +34,8 @@ class Coord:
     def __hash__(self):
         return hash(self._key())
 
+    def __repr__(self):
+        return f"{self.col}{self.row}"
+
 
 CoordLike = Union[Coord, str]
